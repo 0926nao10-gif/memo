@@ -1,11 +1,21 @@
-const STORAGE_KEY = "memo-mind-map-v2";
-const DEFAULT_COLOR = "#4ade80";
+const STORAGE_KEY = "memo-mind-map-v3";
+const DEFAULT_COLOR = "#6ee7b7";
+const COLOR_TEMPLATES = [
+  "#6ee7b7",
+  "#67e8f9",
+  "#93c5fd",
+  "#c4b5fd",
+  "#f9a8d4",
+  "#fca5a5",
+  "#fde68a",
+  "#fdba74"
+];
 
 const initialData = {
   id: crypto.randomUUID(),
   heading: "中心",
   content: "",
-  color: "#38bdf8",
+  color: "#67e8f9",
   collapsed: false,
   side: "root",
   children: []
@@ -14,11 +24,13 @@ const initialData = {
 let data = loadData();
 let selectedId = data.id;
 let allCollapsed = false;
+let isRendering = false;
 
 const treeContainer = document.getElementById("treeContainer");
 const headingInput = document.getElementById("headingInput");
 const contentInput = document.getElementById("contentInput");
 const colorInput = document.getElementById("colorInput");
+const colorPalette = document.getElementById("colorPalette");
 const saveStatus = document.getElementById("saveStatus");
 
 const addChildButton = document.getElementById("addChildButton");
@@ -34,14 +46,15 @@ function clone(value) {
 }
 
 function normalizeNode(node, fallbackSide = "right") {
+  const side = node.side || fallbackSide;
   return {
     id: node.id || crypto.randomUUID(),
     heading: node.heading ?? node.title ?? "",
     content: node.content ?? node.body ?? "",
     color: node.color || DEFAULT_COLOR,
     collapsed: Boolean(node.collapsed),
-    side: node.side || fallbackSide,
-    children: (node.children || []).map(child => normalizeNode(child, node.side || fallbackSide))
+    side,
+    children: (node.children || []).map(child => normalizeNode(child, side === "root" ? "right" : side))
   };
 }
 
@@ -50,7 +63,9 @@ function loadData() {
   if (!saved) return clone(initialData);
 
   try {
-    return normalizeNode(JSON.parse(saved), "root");
+    const loaded = normalizeNode(JSON.parse(saved), "root");
+    loaded.side = "root";
+    return loaded;
   } catch {
     return clone(initialData);
   }
@@ -78,10 +93,32 @@ function getSelectedNode() {
 
 function updateEditor() {
   const selectedNode = getSelectedNode();
+  isRendering = true;
   headingInput.value = selectedNode.heading;
   contentInput.value = selectedNode.content;
   colorInput.value = selectedNode.color || DEFAULT_COLOR;
   deleteButton.disabled = selectedNode.id === data.id;
+  isRendering = false;
+}
+
+function renderColorPalette() {
+  colorPalette.innerHTML = "";
+  const selectedNode = getSelectedNode();
+
+  COLOR_TEMPLATES.forEach(color => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `color-chip ${selectedNode.color === color ? "active" : ""}`;
+    button.style.background = color;
+    button.title = color;
+    button.addEventListener("click", () => {
+      selectedNode.color = color;
+      colorInput.value = color;
+      saveData();
+      renderTree();
+    });
+    colorPalette.appendChild(button);
+  });
 }
 
 function renderTree() {
@@ -109,6 +146,7 @@ function renderTree() {
   map.append(leftBranch, center, rightBranch);
   treeContainer.appendChild(map);
   updateEditor();
+  renderColorPalette();
 }
 
 function renderBranch(node, side) {
@@ -190,7 +228,7 @@ function createNewMemo(side = "right") {
     id: crypto.randomUUID(),
     heading: "",
     content: "",
-    color: DEFAULT_COLOR,
+    color: COLOR_TEMPLATES[Math.floor(Math.random() * COLOR_TEMPLATES.length)],
     collapsed: false,
     side,
     children: []
@@ -249,6 +287,8 @@ function deleteSelected() {
 }
 
 function updateSelectedFromEditor() {
+  if (isRendering) return;
+
   const selectedNode = getSelectedNode();
   selectedNode.heading = headingInput.value;
   selectedNode.content = contentInput.value;
@@ -304,9 +344,9 @@ function resetTemplate() {
   renderTree();
 }
 
-[headingInput, contentInput, colorInput].forEach(input => {
-  input.addEventListener("input", updateSelectedFromEditor);
-});
+headingInput.addEventListener("change", updateSelectedFromEditor);
+contentInput.addEventListener("change", updateSelectedFromEditor);
+colorInput.addEventListener("input", updateSelectedFromEditor);
 
 addChildButton.addEventListener("click", addChild);
 addSiblingButton.addEventListener("click", addSibling);
