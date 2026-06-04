@@ -1,21 +1,20 @@
-const STORAGE_KEY = "memo-mind-map-v4";
-const DEFAULT_COLOR = "#6ee7b7";
+const STORAGE_KEY = "memo-mind-map-v5";
+const DEFAULT_COLOR = "#ffffff";
 const COLOR_TEMPLATES = [
-  "#6ee7b7",
-  "#67e8f9",
-  "#93c5fd",
-  "#c4b5fd",
-  "#f9a8d4",
-  "#fca5a5",
-  "#fde68a",
-  "#fdba74"
+  "#ffffff", // 白
+  "#fca5a5", // 赤
+  "#93c5fd", // 青
+  "#c4b5fd", // 紫
+  "#fde68a", // 黄色
+  "#bef264", // 黄緑
+  "#67e8f9"  // 水色
 ];
 
 const initialData = {
   id: crypto.randomUUID(),
   heading: "中心",
   content: "",
-  color: "#67e8f9",
+  color: "#ffffff",
   collapsed: false,
   side: "root",
   children: []
