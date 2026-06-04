@@ -47,6 +47,12 @@ button:hover,
   transform: translateY(-1px);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -204,22 +210,11 @@ textarea {
   font-size: 1rem;
 }
 
-.tip-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.tip-grid span,
-.node-tag {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-dark);
-  padding: 0.35rem 0.65rem;
-  font-size: 0.78rem;
-  font-weight: 700;
+.how-to-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  color: var(--muted);
+  line-height: 1.9;
 }
 
 .tree-container {
@@ -272,13 +267,14 @@ textarea {
 .node-card {
   width: min(100%, 720px);
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
   background: #fff;
   border: 2px solid transparent;
   border-radius: 20px;
   padding: 1rem;
   box-shadow: 0 10px 24px rgba(31, 41, 51, 0.08);
   text-align: left;
+  cursor: pointer;
 }
 
 .node-card.selected {
@@ -305,30 +301,31 @@ textarea {
   flex: 0 0 auto;
 }
 
-.node-title {
+.node-heading {
+  margin: 0;
   font-weight: 800;
   font-size: 1rem;
 }
 
-.node-body {
+.node-content {
   margin: 0;
   color: var(--muted);
   line-height: 1.65;
   white-space: pre-wrap;
 }
 
-.node-tags {
+.card-actions {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.45rem;
   flex-wrap: wrap;
 }
 
-.empty-state {
-  display: grid;
-  place-items: center;
-  min-height: 360px;
-  color: var(--muted);
-  text-align: center;
+.branch-button {
+  padding: 0.45rem 0.75rem;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  box-shadow: none;
+  font-size: 0.82rem;
 }
 
 @media (max-width: 900px) {
