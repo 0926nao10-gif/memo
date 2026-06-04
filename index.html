@@ -8,13 +8,9 @@
   </head>
   <body>
     <header class="app-header">
-      <div>
-        <p class="eyebrow">Memo Tree</p>
-        <h1>要素分解メモ</h1>
-        <p class="lead">メモを「見出し」と「中身」で作り、各メモから枝を生やして、さらに細かいメモへ分解できます。</p>
-      </div>
+      <h1>要素分解メモ</h1>
       <div class="header-actions">
-        <button id="resetTemplateButton" class="secondary-button">初期状態に戻す</button>
+        <button id="resetTemplateButton" class="secondary-button">リセット</button>
         <button id="exportButton" class="primary-button">JSON保存</button>
         <label class="import-label">
           JSON読込
@@ -26,47 +22,36 @@
     <main class="layout">
       <section class="panel editor-panel" aria-labelledby="editorTitle">
         <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Editor</p>
-            <h2 id="editorTitle">選択中のメモ</h2>
-          </div>
-          <span id="saveStatus" class="save-status">自動保存済み</span>
+          <h2 id="editorTitle">選択中の要素</h2>
+          <span id="saveStatus" class="save-status">保存済み</span>
         </div>
 
         <div class="form-grid">
           <label>
             見出し
-            <input id="headingInput" type="text" placeholder="例：サークル運営で頑張ったこと" />
+            <input id="headingInput" type="text" />
           </label>
-          <label class="full-width">
+          <label>
             中身
-            <textarea id="contentInput" rows="10" placeholder="例：課題、行動、結果、学びなどを書く"></textarea>
+            <textarea id="contentInput" rows="8"></textarea>
+          </label>
+          <label>
+            色
+            <input id="colorInput" class="color-input" type="color" />
           </label>
         </div>
 
         <div class="button-row">
-          <button id="addChildButton" class="primary-button">このメモから枝を生やす</button>
-          <button id="addSiblingButton" class="secondary-button">同じ階層にメモを追加</button>
-          <button id="deleteButton" class="danger-button">選択メモを削除</button>
+          <button id="addChildButton" class="primary-button">枝を追加</button>
+          <button id="addSiblingButton" class="secondary-button">同階層に追加</button>
+          <button id="deleteButton" class="danger-button">削除</button>
         </div>
-
-        <section class="tips">
-          <h3>使い方</h3>
-          <ol class="how-to-list">
-            <li>右側のメモをクリックして選択する</li>
-            <li>左側で「見出し」と「中身」を編集する</li>
-            <li>「このメモから枝を生やす」で、その先に子メモを追加する</li>
-          </ol>
-        </section>
       </section>
 
       <section class="panel tree-panel" aria-labelledby="treeTitle">
         <div class="panel-heading">
-          <div>
-            <p class="eyebrow">Tree</p>
-            <h2 id="treeTitle">メモの要素分解図</h2>
-          </div>
-          <button id="expandAllButton" class="secondary-button small-button">全て開く/閉じる</button>
+          <h2 id="treeTitle">ツリー</h2>
+          <button id="expandAllButton" class="secondary-button small-button">開閉</button>
         </div>
         <div id="treeContainer" class="tree-container" aria-live="polite"></div>
       </section>
