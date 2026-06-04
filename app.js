@@ -1,4 +1,4 @@
-const STORAGE_KEY = "memo-mind-map-v3";
+const STORAGE_KEY = "memo-mind-map-v4";
 const DEFAULT_COLOR = "#6ee7b7";
 const COLOR_TEMPLATES = [
   "#6ee7b7",
@@ -168,11 +168,8 @@ function renderBranch(node, side) {
 function renderNodeCard(node, isRoot = false) {
   const card = document.createElement("div");
   card.className = `node-card ${isRoot ? "root-card" : ""} ${node.id === selectedId ? "selected" : ""}`;
+  card.dataset.nodeId = node.id;
   card.style.setProperty("--node-color", node.color || DEFAULT_COLOR);
-  card.addEventListener("click", () => {
-    selectedId = node.id;
-    renderTree();
-  });
 
   const top = document.createElement("div");
   top.className = "node-top";
@@ -180,15 +177,10 @@ function renderNodeCard(node, isRoot = false) {
   const toggle = document.createElement("button");
   toggle.className = "toggle-button";
   toggle.type = "button";
+  toggle.dataset.action = "toggle";
+  toggle.dataset.nodeId = node.id;
   toggle.textContent = node.children.length ? (node.collapsed ? "+" : "−") : "・";
   toggle.title = "開閉";
-  toggle.addEventListener("click", event => {
-    event.stopPropagation();
-    if (!node.children.length) return;
-    node.collapsed = !node.collapsed;
-    saveData();
-    renderTree();
-  });
 
   const heading = document.createElement("h3");
   heading.className = "node-heading";
@@ -210,12 +202,10 @@ function renderNodeCard(node, isRoot = false) {
   const addBranchButton = document.createElement("button");
   addBranchButton.className = "branch-button";
   addBranchButton.type = "button";
+  addBranchButton.dataset.action = "add-child";
+  addBranchButton.dataset.nodeId = node.id;
   addBranchButton.textContent = "＋";
   addBranchButton.title = "枝を追加";
-  addBranchButton.addEventListener("click", event => {
-    event.stopPropagation();
-    addChildToNode(node.id);
-  });
 
   cardActions.appendChild(addBranchButton);
   card.appendChild(cardActions);
@@ -348,16 +338,42 @@ headingInput.addEventListener("change", updateSelectedFromEditor);
 contentInput.addEventListener("change", updateSelectedFromEditor);
 colorInput.addEventListener("input", updateSelectedFromEditor);
 
-addChildButton.addEventListener("click", addChild);
-addSiblingButton.addEventListener("click", addSibling);
-deleteButton.addEventListener("click", deleteSelected);
-exportButton.addEventListener("click", exportJson);
+addChildButton.onclick = () => addChild();
+addSiblingButton.onclick = () => addSibling();
+deleteButton.onclick = () => deleteSelected();
+exportButton.onclick = () => exportJson();
+resetTemplateButton.onclick = () => resetTemplate();
 importInput.addEventListener("change", importJson);
-resetTemplateButton.addEventListener("click", resetTemplate);
-expandAllButton.addEventListener("click", () => {
+expandAllButton.onclick = () => {
   allCollapsed = !allCollapsed;
   setCollapsedState(data, allCollapsed);
   saveData();
+  renderTree();
+};
+
+treeContainer.addEventListener("click", event => {
+  const actionButton = event.target.closest("button[data-action]");
+  if (actionButton) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const nodeId = actionButton.dataset.nodeId;
+    const action = actionButton.dataset.action;
+
+    if (action === "add-child") addChildToNode(nodeId);
+    if (action === "toggle") {
+      const target = findNode(nodeId)?.node;
+      if (!target || !target.children.length) return;
+      target.collapsed = !target.collapsed;
+      saveData();
+      renderTree();
+    }
+    return;
+  }
+
+  const card = event.target.closest(".node-card");
+  if (!card) return;
+  selectedId = card.dataset.nodeId;
   renderTree();
 });
 
