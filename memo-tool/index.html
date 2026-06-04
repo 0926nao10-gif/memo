@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>メモ帳</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <h1>メモ帳</h1>
+        <button id="addMemoButton" type="button">＋ メモを追加</button>
+      </header>
+
+      <section class="memo-editor" aria-label="メモ作成フォーム">
+        <label>
+          見出し
+          <input id="headingInput" type="text" placeholder="見出しを書く" />
+        </label>
+
+        <label>
+          内容
+          <textarea id="contentInput" rows="8" placeholder="内容を書く"></textarea>
+        </label>
+
+        <div class="editor-actions">
+          <button id="saveMemoButton" type="button">保存</button>
+          <button id="clearEditorButton" type="button" class="secondary">入力欄を空にする</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>メモ一覧</h2>
+        <div id="memoList" class="memo-list"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
