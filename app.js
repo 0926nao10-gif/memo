@@ -1,34 +1,14 @@
-const STORAGE_KEY = "memo-branch-tree-v1";
+const STORAGE_KEY = "memo-mind-map-v2";
+const DEFAULT_COLOR = "#4ade80";
 
 const initialData = {
   id: crypto.randomUUID(),
-  heading: "自己分析メモ",
-  content: "ここを起点に、経験・強み・価値観などを枝分かれさせて整理します。",
+  heading: "中心",
+  content: "",
+  color: "#38bdf8",
   collapsed: false,
-  children: [
-    {
-      id: crypto.randomUUID(),
-      heading: "経験",
-      content: "学生生活、サークル、授業、アルバイト、研究などを書き出す。",
-      collapsed: false,
-      children: [
-        {
-          id: crypto.randomUUID(),
-          heading: "アカペラサークルの運営",
-          content: "約100名規模のサークルで、幹部として会議や資料共有の仕組みを整えた。",
-          collapsed: false,
-          children: []
-        }
-      ]
-    },
-    {
-      id: crypto.randomUUID(),
-      heading: "強み",
-      content: "自分がどんな場面で力を発揮できるかを書く。",
-      collapsed: false,
-      children: []
-    }
-  ]
+  side: "root",
+  children: []
 };
 
 let data = loadData();
@@ -38,6 +18,7 @@ let allCollapsed = false;
 const treeContainer = document.getElementById("treeContainer");
 const headingInput = document.getElementById("headingInput");
 const contentInput = document.getElementById("contentInput");
+const colorInput = document.getElementById("colorInput");
 const saveStatus = document.getElementById("saveStatus");
 
 const addChildButton = document.getElementById("addChildButton");
@@ -52,13 +33,15 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function normalizeNode(node) {
+function normalizeNode(node, fallbackSide = "right") {
   return {
     id: node.id || crypto.randomUUID(),
-    heading: node.heading || node.title || "無題のメモ",
-    content: node.content || node.body || "",
+    heading: node.heading ?? node.title ?? "",
+    content: node.content ?? node.body ?? "",
+    color: node.color || DEFAULT_COLOR,
     collapsed: Boolean(node.collapsed),
-    children: (node.children || []).map(normalizeNode)
+    side: node.side || fallbackSide,
+    children: (node.children || []).map(child => normalizeNode(child, node.side || fallbackSide))
   };
 }
 
@@ -67,7 +50,7 @@ function loadData() {
   if (!saved) return clone(initialData);
 
   try {
-    return normalizeNode(JSON.parse(saved));
+    return normalizeNode(JSON.parse(saved), "root");
   } catch {
     return clone(initialData);
   }
@@ -75,7 +58,7 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  saveStatus.textContent = "自動保存済み";
+  saveStatus.textContent = "保存済み";
 }
 
 function findNode(id, node = data, parent = null) {
@@ -97,24 +80,57 @@ function updateEditor() {
   const selectedNode = getSelectedNode();
   headingInput.value = selectedNode.heading;
   contentInput.value = selectedNode.content;
+  colorInput.value = selectedNode.color || DEFAULT_COLOR;
   deleteButton.disabled = selectedNode.id === data.id;
 }
 
 function renderTree() {
   treeContainer.innerHTML = "";
-  const list = document.createElement("ul");
-  list.className = "tree-list";
-  list.appendChild(renderNode(data));
-  treeContainer.appendChild(list);
+
+  const map = document.createElement("div");
+  map.className = "mind-map";
+
+  const leftBranch = document.createElement("div");
+  leftBranch.className = "branch branch-left";
+
+  const center = document.createElement("div");
+  center.className = "center-area";
+  center.appendChild(renderNodeCard(data, true));
+
+  const rightBranch = document.createElement("div");
+  rightBranch.className = "branch branch-right";
+
+  const leftChildren = data.children.filter(child => child.side === "left");
+  const rightChildren = data.children.filter(child => child.side !== "left");
+
+  leftChildren.forEach(child => leftBranch.appendChild(renderBranch(child, "left")));
+  rightChildren.forEach(child => rightBranch.appendChild(renderBranch(child, "right")));
+
+  map.append(leftBranch, center, rightBranch);
+  treeContainer.appendChild(map);
   updateEditor();
 }
 
-function renderNode(node) {
-  const item = document.createElement("li");
-  item.className = "tree-item";
+function renderBranch(node, side) {
+  const wrapper = document.createElement("div");
+  wrapper.className = `branch-node ${side === "left" ? "left-node" : "right-node"}`;
 
+  wrapper.appendChild(renderNodeCard(node));
+
+  if (!node.collapsed && node.children.length) {
+    const children = document.createElement("div");
+    children.className = "branch-children";
+    node.children.forEach(child => children.appendChild(renderBranch(child, side)));
+    wrapper.appendChild(children);
+  }
+
+  return wrapper;
+}
+
+function renderNodeCard(node, isRoot = false) {
   const card = document.createElement("div");
-  card.className = `node-card ${node.id === selectedId ? "selected" : ""}`;
+  card.className = `node-card ${isRoot ? "root-card" : ""} ${node.id === selectedId ? "selected" : ""}`;
+  card.style.setProperty("--node-color", node.color || DEFAULT_COLOR);
   card.addEventListener("click", () => {
     selectedId = node.id;
     renderTree();
@@ -138,7 +154,7 @@ function renderNode(node) {
 
   const heading = document.createElement("h3");
   heading.className = "node-heading";
-  heading.textContent = node.heading || "無題のメモ";
+  heading.textContent = node.heading || "無題";
 
   top.append(toggle, heading);
   card.appendChild(top);
@@ -146,7 +162,7 @@ function renderNode(node) {
   if (node.content) {
     const content = document.createElement("p");
     content.className = "node-content";
-    content.textContent = node.content.length > 140 ? `${node.content.slice(0, 140)}...` : node.content;
+    content.textContent = node.content.length > 90 ? `${node.content.slice(0, 90)}...` : node.content;
     card.appendChild(content);
   }
 
@@ -156,7 +172,8 @@ function renderNode(node) {
   const addBranchButton = document.createElement("button");
   addBranchButton.className = "branch-button";
   addBranchButton.type = "button";
-  addBranchButton.textContent = "＋枝を追加";
+  addBranchButton.textContent = "＋";
+  addBranchButton.title = "枝を追加";
   addBranchButton.addEventListener("click", event => {
     event.stopPropagation();
     addChildToNode(node.id);
@@ -165,32 +182,34 @@ function renderNode(node) {
   cardActions.appendChild(addBranchButton);
   card.appendChild(cardActions);
 
-  item.appendChild(card);
-
-  if (!node.collapsed && node.children.length) {
-    const childList = document.createElement("ul");
-    node.children.forEach(child => childList.appendChild(renderNode(child)));
-    item.appendChild(childList);
-  }
-
-  return item;
+  return card;
 }
 
-function createNewMemo(heading = "新しいメモ") {
+function createNewMemo(side = "right") {
   return {
     id: crypto.randomUUID(),
-    heading,
+    heading: "",
     content: "",
+    color: DEFAULT_COLOR,
     collapsed: false,
+    side,
     children: []
   };
 }
 
+function getNextRootSide() {
+  const leftCount = data.children.filter(child => child.side === "left").length;
+  const rightCount = data.children.filter(child => child.side !== "left").length;
+  return rightCount <= leftCount ? "right" : "left";
+}
+
 function addChildToNode(nodeId) {
-  const target = findNode(nodeId)?.node;
+  const found = findNode(nodeId);
+  const target = found?.node;
   if (!target) return;
 
-  const child = createNewMemo("枝分かれしたメモ");
+  const side = target.id === data.id ? getNextRootSide() : target.side;
+  const child = createNewMemo(side);
   target.children.push(child);
   target.collapsed = false;
   selectedId = child.id;
@@ -209,7 +228,7 @@ function addSibling() {
     return;
   }
 
-  const sibling = createNewMemo("同じ階層のメモ");
+  const sibling = createNewMemo(found.node.side || "right");
   found.parent.children.push(sibling);
   selectedId = sibling.id;
   saveData();
@@ -220,7 +239,7 @@ function deleteSelected() {
   const found = findNode(selectedId);
   if (!found?.parent) return;
 
-  const ok = confirm(`「${found.node.heading || "無題のメモ"}」を削除しますか？`);
+  const ok = confirm("選択した要素を削除しますか？");
   if (!ok) return;
 
   found.parent.children = found.parent.children.filter(child => child.id !== selectedId);
@@ -231,8 +250,9 @@ function deleteSelected() {
 
 function updateSelectedFromEditor() {
   const selectedNode = getSelectedNode();
-  selectedNode.heading = headingInput.value.trim() || "無題のメモ";
-  selectedNode.content = contentInput.value.trim();
+  selectedNode.heading = headingInput.value;
+  selectedNode.content = contentInput.value;
+  selectedNode.color = colorInput.value;
   saveStatus.textContent = "保存中...";
   saveData();
   renderTree();
@@ -255,12 +275,13 @@ function importJson(event) {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      data = normalizeNode(JSON.parse(reader.result));
+      data = normalizeNode(JSON.parse(reader.result), "root");
+      data.side = "root";
       selectedId = data.id;
       saveData();
       renderTree();
     } catch {
-      alert("読み込めるJSON形式ではありません。保存したメモJSONを選んでください。");
+      alert("読み込めるJSON形式ではありません。");
     } finally {
       importInput.value = "";
     }
@@ -274,7 +295,7 @@ function setCollapsedState(node, collapsed) {
 }
 
 function resetTemplate() {
-  const ok = confirm("現在の内容を初期状態に戻しますか？必要な場合は先にJSON保存してください。");
+  const ok = confirm("リセットしますか？");
   if (!ok) return;
 
   data = clone(initialData);
@@ -283,7 +304,7 @@ function resetTemplate() {
   renderTree();
 }
 
-[headingInput, contentInput].forEach(input => {
+[headingInput, contentInput, colorInput].forEach(input => {
   input.addEventListener("input", updateSelectedFromEditor);
 });
 
